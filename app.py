@@ -12,7 +12,9 @@ import unicodedata
 from datetime import datetime
 from functools import wraps
 
-from flask import (Flask, abort, flash, g, jsonify, redirect, render_template, request, session, url_for)
+from flask import (Flask, abort, flash, g, jsonify, redirect, render_template, request, send_from_directory,
+                   session, url_for)
+from jinja2 import ChoiceLoader, FileSystemLoader
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import db as database
@@ -24,7 +26,27 @@ from seed_data import CATALOG
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(os.path.join(BASE_DIR, "instance"), exist_ok=True)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)
+
+# Hỗ trợ cả 2 cách sắp xếp file:
+#  - chuẩn: templates/*.html, static/css/*.css, static/js/*.js
+#  - "phẳng": mọi file nằm cùng thư mục với app.py (khi upload lên GitHub từng file một)
+app.jinja_loader = ChoiceLoader([FileSystemLoader(os.path.join(BASE_DIR, "templates")),
+                                 FileSystemLoader(BASE_DIR)])
+
+
+@app.route("/static/<path:filename>", endpoint="static")
+def static_files(filename):
+    nested = os.path.join(BASE_DIR, "static")
+    if os.path.isfile(os.path.join(nested, filename)):
+        return send_from_directory(nested, filename)
+    name = os.path.basename(filename)
+    # Chế độ phẳng: chỉ phục vụ file .css/.js – không bao giờ lộ mã nguồn .py hay database
+    if name.endswith((".css", ".js")) and os.path.isfile(os.path.join(BASE_DIR, name)):
+        return send_from_directory(BASE_DIR, name)
+    abort(404)
+
+
 app.config.update(
     SECRET_KEY=os.environ.get("SECRET_KEY", "teaway-dev-secret-change-me"),
     DATABASE=os.path.join(BASE_DIR, "instance", "teaway.db"),
