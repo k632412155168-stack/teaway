@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% from "_macros.html" import drink_art, icon %}
+{% block title %}Smart Recipe · {{ r.name }} – {{ site_name }}{% endblock %}
+{% block content %}
+<section class="page-head" style="padding-bottom: 16px">
+  <div class="container">
+    <nav class="breadcrumb">
+      <a href="{{ url_for('create_home') }}">Create</a> /
+      {% if source == 'recipe' %}<a href="{{ url_for('recipe_detail', slug=r.slug) }}">{{ r.name }}</a>{% else %}<a href="{{ url_for('creation_detail', cid=r.id) }}">{{ r.title }}</a>{% endif %}
+      / Smart Recipe
+    </nav>
+    <h1 class="mb-0">Smart Recipe</h1>
+    <p>Kéo thanh theo khẩu vị – Recipe Engine quyết định thành phần nào thay đổi và bao nhiêu, trong giới hạn của công thức.</p>
+  </div>
+</section>
+
+<section class="container" style="padding-bottom: 64px">
+  <div class="smart-tabs" role="tablist">
+    <button class="btn btn-small btn-secondary" data-col="base" role="tab">Công thức</button>
+    <button class="btn btn-small btn-primary" data-col="controls" role="tab">Điều chỉnh</button>
+    <button class="btn btn-small btn-secondary" data-col="result" role="tab">Kết quả</button>
+  </div>
+
+  <div class="smart-grid">
+    <!-- CỘT TRÁI: công thức gốc, khẩu phần, thay thế -->
+    <div class="smart-col" data-col="base">
+      <div class="panel" style="padding: 0; overflow: hidden">
+        <div style="aspect-ratio: 16/10">{{ drink_art(r.color, r.accent, r.temperature or 'iced', r.name) }}</div>
+        <div style="padding: 18px 20px">
+          <p class="eyebrow">Recipe base · {{ 'Verified Recipe' if source == 'recipe' else 'Community Recipe' }}</p>
+          <h3 class="mb-0">{{ r.name }}</h3>
+          <p class="small muted mb-0">{{ r.description }}</p>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Serving</h3>
+        <div class="btn-row" style="justify-content: space-between">
+          <span class="small">Số ly</span>
+          <div class="stepper"><button type="button" id="srv-minus" aria-label="Giảm số ly">−</button><output id="servings">1</output><button type="button" id="srv-plus" aria-label="Tăng số ly">+</button></div>
+        </div>
+        <p class="small muted mt-1 mb-1">Dung tích gốc: <strong class="num">{{ initial.volume_ml }} ml</strong>/ly (chưa tính đá)</p>
+        <label class="toggle"><input type="checkbox" id="keep-volume" checked> Giữ nguyên dung tích ly</label>
+      </div>
+      {% if subs %}
+      <div class="panel">
+        <h3>Substitutions</h3>
+        <p class="small muted">Không có nguyên liệu? Chọn phương án thay thế.</p>
+        {% for idx, opts in subs.items() %}
+          {% set ing = r.ingredients[idx] %}
+          <div class="sub-row">
+            <label for="sub-{{ idx }}">{{ ing.name }}</label>
+            <select id="sub-{{ idx }}" class="sub-select" data-index="{{ idx }}" {{ 'disabled' if opts[0].label == 'Unavailable' }}>
+              <option value="">Giữ nguyên</option>
+              {% for o in opts if o.name %}<option value="{{ o.name }}" data-label="{{ o.label }}" data-note="{{ o.note }}">{{ o.name }} · {{ o.label }}</option>{% endfor %}
+            </select>
+            {% if opts[0].label == 'Unavailable' %}<span class="sub-note"><span class="sub-label unavailable">Unavailable</span> {{ opts[0].note }}</span>
+            {% else %}<span class="sub-note" id="subnote-{{ idx }}"></span>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- CỘT GIỮA: thanh điều chỉnh -->
+    <div class="smart-col active" data-col="controls">
+      <div class="panel">
+        <h3>{{ icon('sliders') }} Taste controls</h3>
+        {% for key, s in sliders.items() %}
+        <div class="slider-block">
+          <div class="slider-top"><label for="sl-{{ key }}">{{ s.label }}</label><span class="slider-value" id="val-{{ key }}">0%</span></div>
+          <p class="slider-desc">{{ s.desc }}</p>
+          <input type="range" id="sl-{{ key }}" class="taste-slider" data-key="{{ key }}" data-role="{{ s.role }}" min="-50" max="50" step="5" value="0" aria-describedby="ex-{{ key }}">
+          <div class="slider-poles"><span>{{ s.low }}</span><span>{{ s.high }}</span></div>
+          <p class="slider-example" id="ex-{{ key }}"></p>
+        </div>
+        {% else %}
+          <p class="muted">Công thức này không có nhóm nguyên liệu để điều chỉnh.</p>
+        {% endfor %}
+        <div class="callout note mt-1 small"><strong>Cách đọc thông số:</strong> giá trị âm là giảm so với công thức gốc; giá trị dương là tăng. Tỷ lệ % là mức điều chỉnh nguyên liệu liên quan, không phải mức tăng tương ứng của cảm nhận vị giác.</div>
+        <div class="btn-row mt-1">
+          <button type="button" class="btn btn-ghost btn-small" id="reset">{{ icon('reset', 16) }} Reset to Original</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CỘT PHẢI: kết quả -->
+    <div class="smart-col" data-col="result">
+      <div class="panel" id="result-panel" aria-live="polite">
+        <h3>Kết quả sau điều chỉnh</h3>
+        <div class="result-summary">
+          <div><span>Thể tích</span><strong id="r-volume">{{ initial.volume_ml }}</strong> <small>ml</small></div>
+          <div><span>Cost / ly</span><strong id="r-cps">{{ initial.cost_per_serving|vnd }}</strong></div>
+          <div><span>Tổng cost</span><strong id="r-cost">{{ initial.cost|vnd }}</strong></div>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="r-table">
+            <thead><tr><th>Thành phần</th><th class="num">Gốc</th><th class="num">Mới</th></tr></thead>
+            <tbody>
+              {% for i in initial.ingredients %}
+              <tr><td>{{ i.name }}</td><td class="num">{{ i.original_qty }} {{ i.unit }}</td><td class="num">{{ i.qty }} {{ i.unit }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <ul class="msg-list" id="r-messages"></ul>
+      </div>
+
+      <div class="panel" id="compare">
+        <h3>{{ icon('compare') }} Compare versions · hồ sơ vị ước tính</h3>
+        <div class="compare-taste" id="r-taste"></div>
+        <p class="tiny muted mt-1 mb-0">Thanh xám: công thức gốc · Thanh đậm: phiên bản của bạn. Ước tính từ quy tắc, cần nếm thử để xác nhận.</p>
+      </div>
+
+      {% if r.brewing %}
+      <div class="panel">
+        <h3>{{ icon('cup') }} Brewing guide</h3>
+        <p class="small mb-0" id="r-brewing">{{ r.brewing.tea }}: {{ r.brewing.leaf_g }} g lá / {{ r.brewing.water_ml }} ml nước · {{ r.brewing.temp }}°C</p>
+      </div>
+      {% endif %}
+
+      <div class="panel">
+        <h3>Lưu phiên bản của bạn</h3>
+        <div class="field"><label for="save-note">Ghi chú phiên bản</label>
+          <input type="text" id="save-note" maxlength="60" placeholder="vd: Less Sweet, Stronger Oolong"></div>
+        <label class="check"><input type="checkbox" id="save-major"> Thay đổi lớn (tăng số phiên bản chính, vd v2.0)</label>
+        <label class="check"><input type="checkbox" id="save-public"> Chia sẻ công khai lên Community</label>
+        <div class="btn-row">
+          <button type="button" class="btn btn-primary" id="save-btn">{{ icon('bookmark', 18) }} Save Recipe</button>
+          <button type="button" class="btn btn-outline" id="share-btn">{{ icon('share', 18) }} Share Recipe Card</button>
+        </div>
+        <p class="small mt-1 mb-0" id="save-status" role="status"></p>
+        {% if not current_user %}<p class="tiny muted mt-1 mb-0">Cần <a href="{{ url_for('login', next=request.path) }}">đăng nhập</a> để lưu phiên bản.</p>{% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script id="smart-config" type="application/json">{{ {
+  'source': source, 'id': source_id, 'name': r.name,
+  'endpoint': url_for('api_adjust'), 'saveEndpoint': url_for('api_save_version'),
+  'loginUrl': url_for('login', next=request.path), 'initial': initial,
+  'axes': axes
+}|tojson }}</script>
+<script src="{{ url_for('static', filename='js/smart_recipe.js') }}"></script>
+{% endblock %}

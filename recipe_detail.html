@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% from "_macros.html" import drink_art, recipe_card, creation_card, icon, taste_profile %}
+{% block title %}{{ r.name }} – {{ site_name }}{% endblock %}
+{% block description %}{{ r.description }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <nav class="breadcrumb"><a href="{{ url_for('explore') }}">Tea Library</a> / {{ r.category }}</nav>
+    <div class="detail-hero">
+      <div>{{ drink_art(r.color, r.accent, r.temperature, r.name) }}</div>
+      <div>
+        <span class="status-label">{{ icon('leaf', 14) }} Verified Recipe · prototype đã chuẩn hóa</span>
+        <h1 class="mt-1">{{ r.name }}</h1>
+        <p class="muted mb-1">{{ r.name_en }}</p>
+        <p>{{ r.description }}</p>
+        <div class="pills">
+          {% for t in r.flavor_tags %}<span class="pill">{{ t }}</span>{% endfor %}
+          {% for t in r.tags %}<span class="pill pill-sage">{{ t }}</span>{% endfor %}
+        </div>
+        <div class="fact-grid">
+          <div class="fact"><span>Chuẩn bị</span><strong>{{ r.prep_minutes }} phút</strong></div>
+          <div class="fact"><span>Độ khó</span><strong>{{ r.difficulty|diff }}</strong></div>
+          <div class="fact"><span>Dung tích</span><strong>{{ r.volume_ml }} ml</strong></div>
+          <div class="fact"><span>Cost / ly</span><strong>{{ r.cost_per_serving|vnd }}</strong></div>
+        </div>
+        {% if r.match %}
+          <p class="mb-1"><strong>Tea DNA compatibility:</strong> {{ r.match }}% với hồ sơ {{ user_dna.profile.name if user_dna else 'của bạn' }}</p>
+        {% elif not user_dna %}
+          <p class="small muted"><a href="{{ url_for('tea_dna_quiz') }}">Làm Tea DNA</a> để xem công thức này hợp khẩu vị bạn đến đâu.</p>
+        {% endif %}
+        <div class="btn-row mt-1">
+          <a class="btn btn-primary" href="{{ url_for('smart_recipe', slug=r.slug) }}">{{ icon('sliders', 18) }} Customize this Recipe</a>
+          <button class="btn btn-outline js-share" data-title="{{ r.name }}">{{ icon('share', 18) }} Share</button>
+        </div>
+        <div class="mt-1">
+        {% if current_user %}
+          {% if saved %}
+            <form method="post" action="{{ url_for('save_recipe', slug=r.slug) }}" class="save-box">
+              <span class="small">{{ icon('bookmark', 16) }} Đã lưu trong <strong>{{ saved.collection }}</strong></span>
+              <input type="hidden" name="action" value="remove">
+              <button class="btn btn-ghost btn-small">Bỏ lưu</button>
+            </form>
+          {% else %}
+            <form method="post" action="{{ url_for('save_recipe', slug=r.slug) }}" class="save-box">
+              <input type="text" name="collection" list="collections" placeholder="Bộ sưu tập (vd: My Summer Drinks)" aria-label="Tên bộ sưu tập">
+              <datalist id="collections">{% for c in collections %}<option value="{{ c }}">{% endfor %}
+                <option value="My Summer Drinks"><option value="Less Sugar, More Tea"><option value="Weekend Experiments"></datalist>
+              <button class="btn btn-secondary btn-small">{{ icon('bookmark', 16) }} Save</button>
+            </form>
+          {% endif %}
+        {% else %}
+          <a class="btn btn-secondary btn-small" href="{{ url_for('login', next=request.path) }}">{{ icon('bookmark', 16) }} Đăng nhập để lưu</a>
+        {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-tight">
+  <div class="container detail-cols">
+    <div>
+      <h2>Nguyên liệu <span class="muted small">· {{ r.servings }} ly</span></h2>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Thành phần</th><th>Vai trò</th><th class="num">Định lượng</th></tr></thead>
+          <tbody>
+          {% for i in r.ingredients %}
+            <tr><td>{{ i.name }}</td><td class="small muted">{{ i.role|role }}</td><td class="num">{{ i.qty|qty }} {{ i.unit }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="tiny muted mt-1">Thể tích chất lỏng trước khi thêm đá: {{ r.volume_ml }} ml. Đây là công thức prototype để kiểm thử, không phải tỷ lệ chuẩn cho mọi loại trà hoặc syrup.</p>
+
+      <h2 class="mt-3">Hướng dẫn từng bước</h2>
+      <ol class="steps">{% for s in r.steps %}<li><span>{{ s }}</span></li>{% endfor %}</ol>
+
+      <h3 class="mt-3">Thiết bị</h3>
+      <p class="muted">Ấm hoặc bình ủ trà, nhiệt kế (nếu có), lưới lọc, {% if r.temperature == 'iced' %}bình lắc, {% endif %}cốc đong ml, cân nhà bếp.</p>
+    </div>
+    <aside>
+      {% if r.brewing %}
+      <div class="panel">
+        <h3>{{ icon('cup') }} Brewing guide</h3>
+        <dl class="meta-row" style="border:0; padding:0; margin:0">
+          <div><dt>Nhiệt độ</dt><dd>{{ r.brewing.temp }}°C</dd></div>
+          <div><dt>Thời gian</dt><dd>{% if r.brewing.minutes >= 60 %}{{ (r.brewing.minutes / 60)|round|int }} giờ{% elif r.brewing.minutes < 1 %}{{ (r.brewing.minutes * 60)|int }} giây{% else %}{{ r.brewing.minutes|qty }} phút{% endif %}</dd></div>
+          <div><dt>Tỷ lệ</dt><dd>{{ r.brewing.leaf_g }} g / {{ r.brewing.water_ml }} ml</dd></div>
+        </dl>
+      </div>
+      {% endif %}
+      <div class="panel">
+        <h3>Hồ sơ vị</h3>
+        {{ taste_profile(r.taste, axes) }}
+      </div>
+      <div class="panel">
+        <h3>{{ icon('warn') }} Dị ứng & lưu ý an toàn</h3>
+        {% if r.allergens %}<ul class="small">{% for a in r.allergens %}<li>{{ a }}</li>{% endfor %}</ul>{% else %}<p class="small muted">Không có thành phần gây dị ứng phổ biến trong danh mục.</p>{% endif %}
+        <p class="small mb-0">{{ 'Có caffeine.' if r.caffeine else 'Không chứa caffeine.' }} {{ 'Không có sữa bò.' if r.dairy_free }}</p>
+      </div>
+      <div class="panel">
+        <h3>Bảo quản</h3>
+        <p class="small mb-0">{{ r.storage }}</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+{% if variants %}
+<section class="section">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Community versions</p><h2>Phiên bản từ cộng đồng</h2></div></div>
+    <div class="grid grid-3">{% for c in variants %}{{ creation_card(c) }}{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Có thể bạn cũng thích</p><h2>Công thức có hồ sơ vị gần giống</h2></div></div>
+    <div class="grid grid-3">{% for x in similar %}{{ recipe_card(x) }}{% endfor %}</div>
+  </div>
+</section>
+{% endblock %}

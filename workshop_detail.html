@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}{{ w.name }} – {{ site_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <nav class="breadcrumb"><a href="{{ url_for('workshops') }}">Workshops</a> / {{ w.name }}</nav>
+    <div class="booking-layout">
+      <div>
+        <h1>{{ w.name }}</h1>
+        <p>{{ w.summary }}</p>
+        <div class="ws-meta mb-2">
+          <span>{{ icon('calendar', 16) }} {{ w.starts_at|date('%d/%m/%Y · %H:%M') }}</span>
+          <span>{{ icon('clock', 16) }} {{ w.duration }}</span>
+          <span>{{ icon('map', 16) }} {{ w.location }}</span>
+        </div>
+        <div class="panel"><h3>Đối tượng phù hợp</h3><p class="mb-0">{{ w.audience }}</p></div>
+        <div class="panel"><h3>Nội dung học</h3><ol class="steps">{% for c in w.content %}<li><span>{{ c }}</span></li>{% endfor %}</ol></div>
+        <div class="panel"><h3>Bạn mang về</h3><p class="mb-0">{{ w.takeaway }}</p></div>
+        {% if w.safety %}<div class="callout safe mt-1"><strong>An toàn thực phẩm:</strong> {{ w.safety }}</div>{% endif %}
+        <div class="panel">
+          <h3>Chính sách hủy và hoàn tiền</h3>
+          <ul class="small mb-0">
+            <li>Hủy trước 7 ngày: hoàn 100%.</li>
+            <li>Hủy trong vòng 3–7 ngày: hoàn 50% hoặc chuyển sang buổi khác.</li>
+            <li>Hủy trong vòng 72 giờ: không hoàn tiền, có thể chuyển nhượng vé cho người khác.</li>
+            <li>Nếu ban tổ chức hủy buổi học: hoàn 100% trong 5 ngày làm việc.</li>
+          </ul>
+        </div>
+      </div>
+      <aside class="panel booking-card">
+        <p class="eyebrow">Đặt chỗ</p>
+        <div class="btn-row" style="justify-content: space-between">
+          <span class="price">{{ w.price|vnd }}<span class="small muted"> / người</span></span>
+          <span class="seats-left {{ 'full' if w.left <= 0 else 'low' if w.left <= 5 }}">{{ 'Hết chỗ' if w.left <= 0 else 'Còn ' ~ w.left ~ '/' ~ w.capacity ~ ' chỗ' }}</span>
+        </div>
+        {% if w.left > 0 %}
+        <form method="post" class="mt-1" novalidate>
+          <div class="field"><label for="name">Họ tên *</label><input type="text" id="name" name="name" required value="{{ form.get('name', '') }}" autocomplete="name"></div>
+          <div class="field"><label for="phone">Số điện thoại *</label><input type="tel" id="phone" name="phone" required placeholder="0901234567" value="{{ form.get('phone', '') }}" autocomplete="tel"></div>
+          <div class="field"><label for="email">Email</label><input type="email" id="email" name="email" value="{{ form.get('email', '') }}" autocomplete="email"></div>
+          <div class="field"><label for="seats">Số chỗ</label>
+            <select id="seats" name="seats">{% for n in range(1, [5, w.left]|min + 1) %}<option {{ 'selected' if form.get('seats') == n|string }}>{{ n }}</option>{% endfor %}</select></div>
+          <div class="field"><label for="note">Ghi chú (dị ứng, yêu cầu đặc biệt)</label><textarea id="note" name="note" rows="2" maxlength="300">{{ form.get('note', '') }}</textarea></div>
+          <label class="check"><input type="checkbox" name="agree" value="1" {{ 'checked' if form.get('agree') }}> Tôi đồng ý với chính sách hủy và hoàn tiền.</label>
+          <button class="btn btn-primary btn-block mt-1">{{ icon('calendar', 18) }} Đặt chỗ</button>
+          <p class="tiny muted mt-1 mb-0">Bản MVP chưa tích hợp cổng thanh toán. Đội ngũ sẽ liên hệ để xác nhận và hướng dẫn thanh toán.</p>
+        </form>
+        {% else %}
+          <p class="muted mt-1">Buổi này đã đủ người. Hãy xem các workshop khác.</p>
+          <a class="btn btn-outline btn-block" href="{{ url_for('workshops') }}">Xem workshop khác</a>
+        {% endif %}
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}

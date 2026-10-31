@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Workshops – {{ site_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <p class="eyebrow">Tea Experiences</p>
+    <h1>Workshop trải nghiệm trực tiếp</h1>
+    <p>Pha trà, phối trà, trang trí cốc và sáng tạo công thức của riêng bạn – cùng Tea Specialist.</p>
+  </div>
+</section>
+<section class="container" style="padding-bottom: 64px">
+  <div class="grid grid-2">
+    {% for w in workshops %}
+    <a class="card ws-card card-link" style="--c: {{ w.color }}" href="{{ url_for('workshop_detail', slug=w.slug) }}">
+      <span class="ws-band"></span>
+      <div class="ws-body">
+        <h3 class="mb-0">{{ w.name }}</h3>
+        <div class="ws-meta">
+          <span>{{ icon('calendar', 16) }} {{ w.starts_at|date('%d/%m/%Y · %H:%M') }}</span>
+          <span>{{ icon('clock', 16) }} {{ w.duration }}</span>
+          <span>{{ icon('users', 16) }} {{ w.audience }}</span>
+        </div>
+        <p class="small muted mb-0">{{ w.summary }}</p>
+        <div class="btn-row" style="justify-content: space-between">
+          <span class="price">{{ w.price|vnd }}</span>
+          <span class="seats-left {{ 'full' if w.left <= 0 else 'low' if w.left <= 5 }}">{{ 'Hết chỗ' if w.left <= 0 else 'Còn ' ~ w.left ~ ' chỗ' }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  <p class="tiny muted mt-2">Lịch, địa điểm và giá vé là thông tin minh họa cho bản MVP.</p>
+</section>
+{% endblock %}

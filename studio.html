@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Recipe Studio – {{ site_name }}{% endblock %}
+{% block content %}
+{% set p = prefill or {} %}
+{% if mode == 'edit' %}{% set default_title = p.title %}
+{% elif mode == 'fork' %}{% set default_title = p.title ~ ' – my version' %}
+{% elif mode == 'from' %}{% set default_title = p.name ~ ' – phiên bản của tôi' %}
+{% else %}{% set default_title = '' %}{% endif %}
+{% set ings = p.ingredients if p.ingredients else [{'name': '', 'qty': '', 'unit': 'ml', 'role': 'tea'}] %}
+{% set taste = p.taste or {} %}
+<section class="page-head">
+  <div class="container container-narrow">
+    <nav class="breadcrumb"><a href="{{ url_for('create_home') }}">Create</a> / Recipe Studio</nav>
+    <h1>Recipe Studio</h1>
+    {% if mode == 'edit' %}
+      <div class="callout note">Bạn đang chỉnh <strong>{{ parent.title }} ({{ parent.version_label }})</strong>. Khi lưu, hệ thống tạo <strong>phiên bản mới</strong> – bản cũ được giữ nguyên.</div>
+    {% elif mode == 'fork' %}
+      <div class="callout note">Create my version: bạn đang tạo biến thể từ <strong>{{ parent.title }}</strong> của <strong>{{ parent.author_name }}</strong>. Tác giả gốc sẽ luôn được ghi nhận.</div>
+    {% elif mode == 'from' %}
+      <div class="callout note">Bắt đầu từ công thức <strong>{{ base.name }}</strong> (được xem là v1.0).</div>
+    {% else %}
+      <p>Tạo công thức từ đầu. Định lượng nhập theo 1 khẩu phần hoặc theo số ly bạn chọn.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="container container-narrow" style="padding-bottom: 64px">
+  <form method="post" action="" id="studio-form" novalidate>
+    <div class="panel">
+      <h3>Thông tin công thức</h3>
+      <div class="field"><label for="title">Recipe name *</label>
+        <input type="text" id="title" name="title" maxlength="80" required value="{{ p.title if posted else default_title }}"></div>
+      <div class="field"><label for="description">Taste description</label>
+        <textarea id="description" name="description" maxlength="400" rows="3" placeholder="Vị ra sao? Hợp với ai?">{{ p.description or '' }}</textarea></div>
+      <div class="form-grid">
+        <div class="field"><label for="category">Beverage category</label>
+          <select id="category" name="category">
+            {% for c in ['Trà trái cây', 'Trà sữa', 'Trà nguyên bản', 'Trà hoa', 'Trà thảo mộc', 'Cold brew', 'Khác'] %}
+              <option {{ 'selected' if p.category == c }}>{{ c }}</option>{% endfor %}
+          </select></div>
+        <div class="field"><label for="tea_base">Tea base</label>
+          <select id="tea_base" name="tea_base">
+            {% set tb = p.tea_base or p.base_tea %}
+            {% for t in tea_types %}<option {{ 'selected' if tb == t }}>{{ t }}</option>{% endfor %}
+          </select></div>
+        <div class="field"><label for="temperature">Nhiệt độ</label>
+          <select id="temperature" name="temperature">
+            {% for k, v in temp_labels.items() %}<option value="{{ k }}" {{ 'selected' if p.temperature == k }}>{{ v }}</option>{% endfor %}
+          </select></div>
+        <div class="field"><label for="prep_minutes">Preparation time (phút)</label>
+          <input type="number" id="prep_minutes" name="prep_minutes" min="1" max="600" value="{{ p.prep_minutes or 10 }}"></div>
+        <div class="field"><label for="servings">Serving size (số ly)</label>
+          <input type="number" id="servings" name="servings" min="1" max="20" value="{{ p.servings or 1 }}"></div>
+        <div class="field"><label for="tags">Tags</label>
+          <input type="text" id="tags" name="tags" placeholder="vd: Less sugar, Peach" value="{{ (p.tags or [])|join(', ') }}"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="btn-row" style="justify-content: space-between"><h3 class="mb-0">Ingredients *</h3>
+        <span class="small">Estimated cost: <strong id="est-cost" class="num">–</strong> / ly · <span id="est-vol" class="num">–</span> ml</span></div>
+      <p class="small muted">Gõ để chọn từ danh mục (có giá tham khảo) hoặc nhập nguyên liệu mới.</p>
+      <table class="ing-table">
+        <thead><tr><th class="small muted" style="text-align:left">Nguyên liệu</th><th class="small muted">Lượng</th><th class="small muted">Đơn vị</th><th class="small muted">Vai trò</th><th></th></tr></thead>
+        <tbody id="ing-body">
+          {% for i in ings %}
+          <tr class="ing-row">
+            <td><input type="text" name="ing_name" list="catalog" value="{{ i.name }}" placeholder="vd: Trà ô long (đã ủ)" aria-label="Tên nguyên liệu"></td>
+            <td class="col-qty"><input type="number" name="ing_qty" step="0.1" min="0" value="{{ i.qty }}" aria-label="Định lượng"></td>
+            <td class="col-unit"><select name="ing_unit" aria-label="Đơn vị"><option {{ 'selected' if i.unit == 'ml' }}>ml</option><option {{ 'selected' if i.unit == 'g' }}>g</option></select></td>
+            <td class="col-role"><select name="ing_role" aria-label="Vai trò">{% for k, v in roles.items() %}<option value="{{ k }}" {{ 'selected' if i.role == k }}>{{ v }}</option>{% endfor %}</select></td>
+            <td class="col-del"><button type="button" class="icon-btn ing-del" aria-label="Xóa nguyên liệu">{{ icon('x', 16) }}</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <datalist id="catalog">{% for name in catalog %}<option value="{{ name }}">{% endfor %}</datalist>
+      <button type="button" class="btn btn-outline btn-small" id="ing-add">{{ icon('plus', 16) }} Thêm nguyên liệu</button>
+    </div>
+
+    <div class="panel">
+      <h3>Brewing instructions</h3>
+      <div class="field"><label for="steps">Mỗi dòng là một bước</label>
+        <textarea id="steps" name="steps" rows="6" placeholder="Ủ 6 g ô long với 200 ml nước 90°C trong 3 phút…">{{ (p.steps or [])|join('\n') }}</textarea></div>
+    </div>
+
+    <div class="panel">
+      <h3>Hồ sơ vị (tự đánh giá)</h3>
+      <p class="small muted">Dùng để gợi ý công thức cho người có Tea DNA phù hợp.</p>
+      {% for key, info in axes.items() %}
+        {% set val = taste.get(key, 50) %}
+        <div class="slider-block">
+          <div class="slider-top"><label for="taste_{{ key }}">{{ info.label }}</label><span class="slider-value" data-for="taste_{{ key }}">{{ val }}</span></div>
+          <input class="plain taste-range" type="range" id="taste_{{ key }}" name="taste_{{ key }}" min="0" max="100" step="5" value="{{ val }}">
+          <div class="slider-poles"><span>{{ info.low }}</span><span>{{ info.high }}</span></div>
+        </div>
+      {% endfor %}
+      {% set mv = taste.get('milk', 0) %}
+      <div class="slider-block">
+        <div class="slider-top"><label for="taste_milk">Creaminess</label><span class="slider-value" data-for="taste_milk">{{ mv }}</span></div>
+        <input class="plain taste-range" type="range" id="taste_milk" name="taste_milk" min="0" max="100" step="5" value="{{ mv }}">
+        <div class="slider-poles"><span>Thanh</span><span>Béo</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Chia sẻ & phiên bản</h3>
+      <label class="check"><input type="checkbox" name="is_public" value="1" {{ 'checked' if p.is_public }}> Công khai trên Community (Community Recipe)</label>
+      {% if mode in ['edit', 'from'] %}
+      <label class="check"><input type="checkbox" name="major" value="1"> Thay đổi lớn – tăng phiên bản chính (vd v2.0)</label>
+      {% endif %}
+      <div class="field mt-1"><label for="challenge">Tham gia thử thách (tùy chọn)</label>
+        <select id="challenge" name="challenge">
+          <option value="">Không tham gia</option>
+          {% for ch in challenges %}<option value="{{ ch.slug }}" {{ 'selected' if (p.challenge_slug or preselect) == ch.slug }}>{{ ch.name }} – {{ ch.reward }}</option>{% endfor %}
+        </select>
+        <span class="hint">Bài dự thi cần được đăng công khai. Một số thử thách có điều kiện (chi phí, độ ngọt).</span></div>
+    </div>
+
+    <div class="btn-row mt-2">
+      <button class="btn btn-primary" type="submit">{{ icon('bookmark', 18) }} Lưu công thức</button>
+      <a class="btn btn-ghost" href="{{ url_for('create_home') }}">Hủy</a>
+    </div>
+  </form>
+</section>
+<template id="ing-template">
+  <tr class="ing-row">
+    <td><input type="text" name="ing_name" list="catalog" placeholder="Tên nguyên liệu" aria-label="Tên nguyên liệu"></td>
+    <td class="col-qty"><input type="number" name="ing_qty" step="0.1" min="0" aria-label="Định lượng"></td>
+    <td class="col-unit"><select name="ing_unit" aria-label="Đơn vị"><option>ml</option><option>g</option></select></td>
+    <td class="col-role"><select name="ing_role" aria-label="Vai trò">{% for k, v in roles.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></td>
+    <td class="col-del"><button type="button" class="icon-btn ing-del" aria-label="Xóa nguyên liệu">{{ icon('x', 16) }}</button></td>
+  </tr>
+</template>
+{% endblock %}
+{% block scripts %}
+<script id="catalog-data" type="application/json">{{ catalog|tojson }}</script>
+<script src="{{ url_for('static', filename='js/studio.js') }}"></script>
+{% endblock %}

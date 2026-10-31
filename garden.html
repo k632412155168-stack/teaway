@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Tea Garden – {{ site_name }}{% endblock %}
+{% block content %}
+<section class="page-head" style="padding-bottom: 20px">
+  <div class="container">
+    <p class="eyebrow">Play · Tea Garden – From Leaf to Cup</p>
+    <h1>Khu vườn trà của bạn</h1>
+    <p>Trồng, chăm, hái lá, chế biến đúng quy trình cho từng loại trà, phối blend và phục vụ khách ở Tea House. Bạn không cần hoàn thành mọi bước trong một lần chơi.</p>
+    {% if not current_user %}<p class="small muted"><a href="{{ url_for('login', next=request.path) }}">Đăng nhập</a> để lưu tiến trình vào tài khoản và Tea Passport. Khách chơi được lưu trên trình duyệt này.</p>{% endif %}
+  </div>
+</section>
+
+<section class="container" style="padding-bottom: 64px">
+  <div class="game-shell" id="game" data-auth="{{ 1 if current_user else 0 }}" data-api="{{ url_for('game_state') }}">
+    <div class="game-top">
+      <div>
+        <span class="lvl" id="g-title">Tea Seedling</span> · <span class="small">Cấp <strong id="g-level">1</strong></span><br>
+        <span class="xp-track"><span class="xp-fill" id="g-xpbar" style="width:0"></span></span>
+        <span class="small" id="g-xptext">0 XP</span>
+      </div>
+      <div class="wallet"><span title="Tea Coins">🪙 <span id="g-coins">0</span></span><span title="Lá trà">🍃 <span id="g-leaves">0</span></span></div>
+    </div>
+    <div class="game-tabs" role="tablist">
+      <button class="active" data-tab="garden" role="tab">A · Tea Garden</button>
+      <button data-tab="process" role="tab" data-lvl="2">B · Processing House</button>
+      <button data-tab="blend" role="tab" data-lvl="3">C · Blending Lab</button>
+      <button data-tab="house" role="tab" data-lvl="4">D · Tea House</button>
+      <button data-tab="journal" role="tab">E · Tea Journal</button>
+    </div>
+    <div class="game-area">
+      <div class="game-layout">
+        <div>
+          <!-- A. Garden -->
+          <div class="g-panel" data-panel="garden">
+            <p class="small muted mb-1">Chọn hạt giống rồi bấm vào luống trống để gieo. Bấm luống đã gieo để tưới, khi cây sáng viền thì bấm để thu hoạch.</p>
+            <div class="seed-picker" id="seed-picker"></div>
+            <div class="plots" id="plots"></div>
+            <div class="btn-row mt-1">
+              <button class="btn btn-secondary btn-small" id="water-all">💧 Tưới tất cả</button>
+              <button class="btn btn-ghost btn-small" id="sell-leaves">Bán 5 lá (+10 🪙)</button>
+            </div>
+          </div>
+          <!-- B. Processing -->
+          <div class="g-panel hidden" data-panel="process">
+            <h3>Processing House</h3>
+            <p class="small muted">Mỗi mẻ cần 3 lá cùng loại. Chọn các công đoạn theo đúng thứ tự, rồi canh thời điểm hoàn thành. Đây là mô hình khái quát cho gameplay – quy trình thực tế có nhiều biến thể.</p>
+            <div class="seed-picker" id="proc-types"></div>
+            <div id="proc-work" class="hidden">
+              <p class="label mb-0">Chuỗi công đoạn của bạn</p>
+              <div class="process-chain" id="proc-chain"><span class="pill pill-dark">Harvest</span></div>
+              <div class="process-steps" id="proc-steps"></div>
+              <div id="proc-timing" class="hidden">
+                <p class="small mb-0">Canh thời điểm: bấm <strong>Hoàn thành</strong> khi vạch nằm trong vùng sáng.</p>
+                <div class="heat-meter"><span class="zone" id="heat-zone"></span><i id="heat-mark"></i></div>
+                <button class="btn btn-primary btn-small" id="proc-finish">Hoàn thành</button>
+              </div>
+              <button class="btn btn-ghost btn-small mt-1" id="proc-reset">Làm lại chuỗi</button>
+            </div>
+            <p class="small mt-1" id="proc-result"></p>
+          </div>
+          <!-- C. Blending -->
+          <div class="g-panel hidden" data-panel="blend">
+            <h3>Blending Lab</h3>
+            <p class="small muted">Tổng tỷ lệ luôn bằng 100%. Khi tăng một thành phần, các thành phần khác giảm theo tỷ lệ.</p>
+            <div class="field"><label for="blend-base">Trà nền đã chế biến</label><select id="blend-base"></select></div>
+            <div id="blend-rows" class="axes"></div>
+            <div class="panel mt-1" style="background: var(--ivory)">
+              <p class="label mb-0">Hồ sơ vị của blend</p>
+              <div id="blend-profile" class="pills"></div>
+            </div>
+          </div>
+          <!-- D. Tea House -->
+          <div class="g-panel hidden" data-panel="house">
+            <h3>Tea House</h3>
+            <div class="order-card" id="order"></div>
+            <div class="btn-row mt-1">
+              <button class="btn btn-primary" id="serve">Phục vụ blend hiện tại</button>
+              <button class="btn btn-ghost btn-small" id="skip-order">Khách khác</button>
+            </div>
+            <p class="small mt-1" id="serve-result"></p>
+          </div>
+          <!-- E. Journal -->
+          <div class="g-panel hidden" data-panel="journal">
+            <h3>Tea Journal</h3>
+            <div id="journal"></div>
+            <div class="callout note small mt-1"><strong>Game Recipe</strong> là công thức mô phỏng trong game, không tự động trở thành hướng dẫn chế biến hay pha chế ngoài đời. Hãy mở công thức đã kiểm chứng tương ứng trên website.</div>
+          </div>
+        </div>
+        <aside>
+          <div class="side-card"><h4>Daily Tasks</h4><div id="tasks"></div></div>
+          <div class="side-card"><h4>Kho nguyên liệu</h4><div class="inv" id="inventory"></div></div>
+          <div class="side-card"><h4>Cấp độ</h4>
+            <ol class="small" style="padding-left: 18px; margin: 0">
+              <li>Tea Seedling – vườn nhỏ, trà xanh</li><li>Leaf Keeper – Processing House</li>
+              <li>Tea Artisan – Blending Lab</li><li>Flavor Alchemist – Tea House</li><li>Tea House Master – đơn đặc biệt</li>
+            </ol></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="game-toast" id="toast" role="status"></div>
+{% endblock %}
+{% block scripts %}
+<script id="game-recipes" type="application/json">{{ {
+  'tra-dao-o-long': url_for('recipe_detail', slug='tra-dao-o-long'),
+  'tra-vai-lai': url_for('recipe_detail', slug='tra-vai-lai'),
+  'tra-chanh-mat-ong': url_for('recipe_detail', slug='tra-chanh-mat-ong'),
+  'tra-den-cam-que': url_for('recipe_detail', slug='tra-den-cam-que'),
+  'tra-trang-hoa-hong': url_for('recipe_detail', slug='tra-trang-hoa-hong'),
+  'o-long-rang-nguyen-ban': url_for('recipe_detail', slug='o-long-rang-nguyen-ban'),
+  'tra-xanh-cold-brew-bac-ha': url_for('recipe_detail', slug='tra-xanh-cold-brew-bac-ha')
+}|tojson }}</script>
+<script src="{{ url_for('static', filename='js/garden.js') }}"></script>
+{% endblock %}

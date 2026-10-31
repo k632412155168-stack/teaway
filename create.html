@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_macros.html" import drink_art, icon %}
+{% block title %}Create – {{ site_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <p class="eyebrow">Create</p>
+    <h1>Smart Recipe & Recipe Studio</h1>
+    <p>Bắt đầu từ một công thức đã kiểm chứng và chỉnh theo khẩu vị, hoặc tự viết công thức của riêng bạn từ đầu.</p>
+    <div class="btn-row mt-1">
+      <a class="btn btn-primary" href="{{ url_for('studio') }}">{{ icon('plus', 18) }} Tạo công thức mới</a>
+      <a class="btn btn-outline" href="#library">{{ icon('sliders', 18) }} Chỉnh một công thức có sẵn</a>
+    </div>
+  </div>
+</section>
+
+{% if current_user %}
+<section class="section-tight">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">My Creations</p><h2>Công thức & phiên bản của bạn</h2>
+      <p>Mỗi lần chỉnh sửa tạo phiên bản mới, không ghi đè bản cũ – bạn luôn thấy được quá trình sáng tạo.</p></div></div>
+    {% if lineages %}
+      <div class="grid grid-3">
+      {% for versions in lineages %}
+        {% set root = versions[0] %}
+        <div class="lineage">
+          <p class="eyebrow">{{ versions|length }} phiên bản</p>
+          <h3>{{ root.title }}</h3>
+          <ul class="version-list">
+            {% for v in versions %}
+              <li><a href="{{ url_for('creation_detail', cid=v.id) }}"><span><strong>{{ v.version_label }}</strong> · {{ v.title }}</span><span class="small muted">{{ 'Công khai' if v.is_public else 'Riêng tư' }}</span></a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><h3>Bạn chưa có công thức nào</h3>
+        <p class="muted">Chọn một công thức bên dưới để tùy chỉnh, rồi bấm Save Recipe để lưu phiên bản đầu tiên.</p></div>
+    {% endif %}
+  </div>
+</section>
+{% else %}
+<section class="section-tight"><div class="container"><div class="callout note">
+  <a href="{{ url_for('login', next=request.path) }}">Đăng nhập</a> hoặc <a href="{{ url_for('register') }}">tạo tài khoản</a> để lưu công thức, quản lý phiên bản và đăng lên cộng đồng. Bạn vẫn có thể dùng Smart Recipe mà không cần tài khoản.
+</div></div></section>
+{% endif %}
+
+<section class="section" id="library">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Smart Recipe</p><h2>Chọn công thức để tùy chỉnh</h2></div></div>
+    <div class="grid grid-4">
+      {% for r in recipes %}
+      <article class="card">
+        <div class="card-media" style="aspect-ratio: 16/10">{{ drink_art(r.color, r.accent, r.temperature, r.name) }}</div>
+        <div class="card-body">
+          <h3>{{ r.name }}</h3>
+          <p class="small muted mb-1">{{ r.volume_ml }} ml · {{ r.cost_per_serving|vnd }}/ly</p>
+          <div class="btn-row">
+            <a class="btn btn-primary btn-small" href="{{ url_for('smart_recipe', slug=r.slug) }}">{{ icon('sliders', 16) }} Customize</a>
+            <a class="btn btn-ghost btn-small" href="{{ url_for('studio', **{'from': r.slug}) }}">Studio</a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

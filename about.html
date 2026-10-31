@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}About – {{ site_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container container-narrow">
+    <p class="eyebrow">About</p>
+    <h1>{{ tagline }}</h1>
+    <p>{{ site_name }} là nền tảng Digital-first Tea Lifestyle & Creation: nơi bạn đến để tìm một công thức, ở lại vì có thể biến công thức đó thành phiên bản của riêng mình, và quay lại vì có cả một thế giới trà để tiếp tục khám phá.</p>
+  </div>
+</section>
+<section class="container container-narrow prose" style="padding-bottom: 64px">
+  <h2>Ba trụ cột</h2>
+  <p><strong>Tea Knowledge</strong> – thư viện công thức và kiến thức trà có cấu trúc, được kiểm chứng. <strong>Smart Personalization</strong> – Tea DNA và Smart Recipe giúp bạn điều chỉnh và sáng tạo. <strong>Tea Experience</strong> – game, cộng đồng và workshop tạo sự gắn kết.</p>
+
+  <h2>Nhãn nội dung</h2>
+  <ul>
+    <li><strong>Verified Recipe:</strong> công thức đã chuẩn hóa và kiểm thử theo quy trình Research → Draft → Test → Review → Publish → Monitor.</li>
+    <li><strong>Community Recipe:</strong> công thức do người dùng đóng góp.</li>
+    <li><strong>AI-assisted Recipe:</strong> công thức có AI hỗ trợ, đang chờ chuyên gia kiểm chứng.</li>
+    <li><strong>Game Recipe:</strong> công thức mô phỏng trong Tea Garden – không phải hướng dẫn chế biến thực tế.</li>
+  </ul>
+
+  <h2 id="faq">FAQ</h2>
+  <details><summary>Tea DNA có phải bài kiểm tra tính cách không?</summary><p>Không. Đây là công cụ phân loại sở thích tiêu dùng dựa trên độ ngọt, chua, đắng, độ đậm và hương thơm. Bạn có thể làm lại hoặc chỉnh tay bất cứ lúc nào.</p></details>
+  <details><summary>Slider +25% có nghĩa ly trà ngọt hơn 25%?</summary><p>Không hẳn. Tỷ lệ phần trăm là mức điều chỉnh nguyên liệu liên quan, không phải mức tăng tương ứng của cảm nhận vị giác.</p></details>
+  <details><summary>Vì sao nhân đôi số ly mà một số nguyên liệu không tăng gấp đôi?</summary><p>Thảo mộc, hoa và gia vị được chuyên gia đánh dấu là không nhân tuyến tính để tránh vị bị gắt. Hãy nếm và điều chỉnh.</p></details>
+  <details><summary>Có công thức kombucha trên web không?</summary><p>Không. Đồ uống lên men chỉ được hướng dẫn trong workshop có chuyên gia an toàn thực phẩm giám sát.</p></details>
+  <details><summary>Tôi có cần tài khoản không?</summary><p>Không bắt buộc. Bạn chỉ cần tài khoản khi muốn lưu, tạo, đăng bài hoặc đặt chỗ.</p></details>
+
+  <h2 id="contact">Contact</h2>
+  <p>Email: hello@teaway.local (địa chỉ minh họa) · Hợp tác thương hiệu, workshop và B2B: partner@teaway.local</p>
+
+  <h2 id="privacy">Privacy</h2>
+  <p>Chúng tôi lưu Tea DNA, sở thích, công thức và lịch sử workshop để cá nhân hóa trải nghiệm. Mật khẩu được mã hóa một chiều. Bạn có thể xem, chỉnh sửa và xóa dữ liệu sở thích trong My Tea Space › Preferences. Dữ liệu không được bán cho bên thứ ba.</p>
+
+  <h2 id="terms">Terms</h2>
+  <p>Công thức trên nền tảng mang tính tham khảo. Người dùng tự chịu trách nhiệm về vệ sinh, nguồn nguyên liệu và tình trạng dị ứng của bản thân. Nội dung cộng đồng phải tôn trọng bản quyền và có thể bị gỡ nếu vi phạm. Khi tạo “my version”, tác giả gốc luôn được ghi nhận.</p>
+</section>
+{% endblock %}

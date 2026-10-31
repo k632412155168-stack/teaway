@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "_macros.html" import recipe_card, icon %}
+{% block title %}Tea Library – {{ site_name }}{% endblock %}
+{% macro chips(name, values, labels=None) -%}
+  {% for v in values %}
+    <label class="chip-check"><input type="checkbox" name="{{ name }}" value="{{ v }}" {{ 'checked' if v in args.getlist(name) }}><span>{{ labels[v] if labels else v }}</span></label>
+  {% endfor %}
+{%- endmacro %}
+{% macro radios(name, pairs) -%}
+  {% for v, label in pairs %}
+    <label class="chip-check"><input type="radio" name="{{ name }}" value="{{ v }}" {{ 'checked' if args.get(name) == v }}><span>{{ label }}</span></label>
+  {% endfor %}
+{%- endmacro %}
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <p class="eyebrow">Explore · Tea Library</p>
+    <h1>What would you like to brew today?</h1>
+    <form class="search-bar mt-2" action="{{ url_for('explore') }}" method="get" role="search">
+      {{ icon('search') }}
+      <input type="search" name="q" value="{{ args.get('q', '') }}" placeholder="Tìm theo tên, nguyên liệu… (vd: đào, matcha, ít ngọt)" aria-label="Tìm công thức">
+      {% for k in args if k != 'q' %}{% for v in args.getlist(k) %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}{% endfor %}
+      <button class="btn btn-primary" type="submit">Tìm</button>
+    </form>
+  </div>
+</section>
+
+<section class="container" style="padding-bottom: 64px">
+  <div class="explore-layout">
+    <form id="filters" class="filters" action="{{ url_for('explore') }}" method="get" aria-label="Bộ lọc">
+      <div class="btn-row" style="justify-content: space-between">
+        <h3 class="mb-0">Bộ lọc</h3>
+        <button type="button" class="icon-btn filters-close" aria-label="Đóng bộ lọc">{{ icon('x', 18) }}</button>
+      </div>
+      {% if args.get('q') %}<input type="hidden" name="q" value="{{ args.get('q') }}">{% endif %}
+      <input type="hidden" name="sort" value="{{ sort }}">
+      <div class="filter-group"><h4>Tea type</h4>{{ chips('tea', tea_types) }}</div>
+      <div class="filter-group"><h4>Temperature</h4>{{ chips('temp', ['iced', 'hot', 'cold_brew'], temp_labels) }}</div>
+      <div class="filter-group"><h4>Flavor</h4>{{ chips('flavor', flavors) }}</div>
+      <div class="filter-group"><h4>Ingredients</h4>{{ chips('ingredient', ingredient_keys) }}</div>
+      <div class="filter-group"><h4>Time</h4>{{ radios('time', times) }}</div>
+      <div class="filter-group"><h4>Difficulty</h4>{{ chips('difficulty', ['Easy', 'Medium', 'Advanced'], diff_labels) }}</div>
+      <div class="filter-group"><h4>Budget / ly</h4>{{ radios('budget', budgets) }}</div>
+      <div class="filter-group"><h4>Caffeine</h4>{{ radios('caffeine', [('yes', 'Có caffeine'), ('no', 'Không caffeine')]) }}</div>
+      <div class="filter-group"><h4>Preference</h4>{{ chips('pref', ['dairy_free', 'less_sugar', 'vegan'], {'dairy_free': 'Không sữa bò', 'less_sugar': 'Ít đường', 'vegan': 'Vegan'}) }}</div>
+      <div class="btn-row mt-1">
+        <button class="btn btn-primary btn-small" type="submit">Áp dụng</button>
+        <a class="btn btn-ghost btn-small" href="{{ url_for('explore') }}">Xóa lọc</a>
+      </div>
+    </form>
+
+    <div>
+      <div class="results-head">
+        <p class="mb-0"><strong>{{ results|length }}</strong> <span class="muted">/ {{ total }} công thức{% if active_filters %} · {{ active_filters }} bộ lọc đang bật{% endif %}</span></p>
+        <div class="btn-row">
+          <button type="button" class="btn btn-outline btn-small filter-open">{{ icon('sliders', 16) }} Bộ lọc</button>
+          <form method="get" action="{{ url_for('explore') }}" class="inline">
+            {% for k in args if k != 'sort' %}{% for v in args.getlist(k) %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}{% endfor %}
+            <label class="sr-only" for="sort">Sắp xếp</label>
+            <select id="sort" name="sort" onchange="this.form.submit()" style="width:auto; padding: 8px 12px">
+              {% if user_dna %}<option value="match" {{ 'selected' if sort == 'match' }}>Hợp Tea DNA nhất</option>{% endif %}
+              <option value="featured" {{ 'selected' if sort == 'featured' }}>Nổi bật</option>
+              <option value="cost" {{ 'selected' if sort == 'cost' }}>Chi phí thấp</option>
+              <option value="time" {{ 'selected' if sort == 'time' }}>Nhanh nhất</option>
+            </select>
+          </form>
+        </div>
+      </div>
+      {% if not user_dna %}
+        <div class="callout note mb-2">Làm <a href="{{ url_for('tea_dna_quiz') }}">bài test Tea DNA</a> để xem mức độ phù hợp của từng công thức với khẩu vị của bạn.</div>
+      {% endif %}
+      {% if results %}
+        <div class="grid grid-3">{% for r in results %}{{ recipe_card(r) }}{% endfor %}</div>
+      {% else %}
+        <div class="empty-state">
+          <h3>Chưa có công thức phù hợp</h3>
+          <p class="muted">Thử bỏ bớt một vài bộ lọc, hoặc tự tạo công thức của bạn.</p>
+          <div class="btn-row" style="justify-content:center">
+            <a class="btn btn-outline" href="{{ url_for('explore') }}">Xóa bộ lọc</a>
+            <a class="btn btn-primary" href="{{ url_for('studio') }}">Tạo công thức mới</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

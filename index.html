@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% from "_macros.html" import drink_art, recipe_card, creation_card, icon, axis_bar %}
+{% block content %}
+
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <p class="eyebrow">A Digital-first Tea Lifestyle & Creation Platform</p>
+      <h1>Your tea, your taste, <em>your creation.</em></h1>
+      <p class="hero-lead">Khám phá hương vị mới, cá nhân hóa từng công thức và tạo nên ly trà mang dấu ấn của riêng bạn.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="{{ url_for('explore') }}">{{ icon('search', 18) }} Explore Recipes</a>
+        <a class="btn btn-outline" href="{{ url_for('tea_dna_result') if user_dna else url_for('tea_dna_quiz') }}">{{ icon('dna', 18) }} Discover My Tea DNA</a>
+      </div>
+      <div class="hero-stats">
+        <div><strong>13</strong><span>công thức đã chuẩn hóa</span></div>
+        <div><strong>13</strong><span>hồ sơ Tea DNA</span></div>
+        <div><strong>5</strong><span>workshop trải nghiệm</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      {{ drink_art('#E39B62', '#F1EADB', 'iced', 'Trà đào ô long') }}
+      <div class="hero-chip c1"><span class="small muted">Sweetness</span><strong>+25% → 25 ml syrup</strong></div>
+      <div class="hero-chip c2"><span class="small muted">Tea DNA</span><strong>Honey Bloom</strong></div>
+    </div>
+  </div>
+</section>
+
+<section class="section-tight">
+  <div class="container">
+    <div class="eco-grid">
+      <a class="eco-item" href="{{ url_for('explore') }}"><span class="num-tag">01</span><h3>Tea Discovery</h3><p>Thư viện công thức, nguyên liệu và kiến thức trà.</p></a>
+      <a class="eco-item" href="{{ url_for('tea_dna_quiz') }}"><span class="num-tag">02</span><h3>Tea DNA</h3><p>Bài test khẩu vị, hồ sơ vị giác, gợi ý cá nhân hóa.</p></a>
+      <a class="eco-item" href="{{ url_for('create_home') }}"><span class="num-tag">03</span><h3>Smart Recipe Studio</h3><p>Điều chỉnh định lượng, thay nguyên liệu, sáng tạo công thức.</p></a>
+      <a class="eco-item" href="{{ url_for('play') }}"><span class="num-tag">04</span><h3>Tea Garden Game</h3><p>Trồng, thu hoạch, chế biến, phối trà và mở tiệm.</p></a>
+      <a class="eco-item" href="{{ url_for('community') }}"><span class="num-tag">05</span><h3>Tea Community</h3><p>Chia sẻ công thức, thử thách, đánh giá và kết nối.</p></a>
+      <a class="eco-item" href="{{ url_for('workshops') }}"><span class="num-tag">06</span><h3>Tea Experiences</h3><p>Workshop pha trà, phối trà, kombucha và trang trí cốc.</p></a>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="container feature">
+    <div>
+      <p class="eyebrow">Discover your Tea DNA</p>
+      <h2>Bạn thuộc nhóm khẩu vị nào?</h2>
+      <p class="muted">12 câu hỏi ngắn về độ ngọt, chua, đắng, độ đậm và hương thơm. Kết quả là hồ sơ vị giác trên 5 trục – dùng để gợi ý công thức hợp với bạn. Đây là công cụ phân loại sở thích, không phải bài kiểm tra tính cách.</p>
+      <ul class="feature-list">
+        <li>Điểm 0–100 trên từng trục, có thể chỉnh lại thủ công</li>
+        <li>Mức độ tự tin của kết quả – không khẳng định khi dữ liệu chưa đủ</li>
+        <li>Thẻ Tea DNA để chia sẻ với bạn bè</li>
+      </ul>
+      <a class="btn btn-primary" href="{{ url_for('tea_dna_result') if user_dna else url_for('tea_dna_quiz') }}">{{ 'Xem Tea DNA của tôi' if user_dna else 'Làm bài test (3 phút)' }} {{ icon('arrow', 18) }}</a>
+    </div>
+    <div class="dna-card" style="--dna-color: {{ user_dna.profile.color if user_dna else '#C88F67' }}">
+      <p class="eyebrow">{{ 'Your Tea DNA' if user_dna else 'Ví dụ hồ sơ' }}</p>
+      <h2>{{ user_dna.profile.name if user_dna else 'Honey Bloom' }}</h2>
+      <p class="dna-tagline">{{ user_dna.profile.tagline if user_dna else 'The Sweet & Fruity Explorer' }}</p>
+      {% set sample = user_dna.scores if user_dna else {'sweetness': 82, 'acidity': 35, 'bitterness': 28, 'strength': 65, 'aroma': 78} %}
+      <div class="pills mb-1">
+        {% for k, v in sample.items() if k != 'milk' %}<span class="pill">{{ k|capitalize }} {{ v }}</span>{% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if recs %}
+<section class="section">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Dành cho bạn</p><h2>Gợi ý theo Tea DNA</h2></div>
+      <a class="btn btn-ghost" href="{{ url_for('explore', sort='match') }}">Xem tất cả {{ icon('arrow', 18) }}</a></div>
+    <div class="grid grid-4">{% for r in recs %}{{ recipe_card(r) }}{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section {{ 'section-alt' if recs }}">
+  <div class="container">
+    <div class="section-head">
+      <div><p class="eyebrow">Explore recipes</p><h2>Công thức nổi bật mùa này</h2>
+        <p>Mỗi công thức có định lượng chuẩn hóa, chi phí mỗi ly và hướng dẫn pha từng bước.</p></div>
+      <a class="btn btn-ghost" href="{{ url_for('explore') }}">Mở Tea Library {{ icon('arrow', 18) }}</a>
+    </div>
+    <div class="grid grid-4">{% for r in featured %}{{ recipe_card(r) }}{% endfor %}</div>
+  </div>
+</section>
+
+<section class="section section-dark">
+  <div class="container feature reverse">
+    <div>
+      <p class="eyebrow" style="color: var(--cream)">Create your own</p>
+      <h2>Một công thức, phiên bản của riêng bạn</h2>
+      <p style="color:#D9DFD3">Kéo thanh Sweetness, Tea Strength, Acidity, Fruitiness – Recipe Engine tự quyết định nên đổi thành phần nào, bao nhiêu, và cân bằng lại nước để giữ dung tích ly.</p>
+      <ul class="feature-list" style="color:#D9DFD3">
+        <li>Scale 1 → 4 ly, tự đánh dấu nguyên liệu không nhân tuyến tính</li>
+        <li>Thay nguyên liệu: Best Match · Flavor Twist · Budget Option</li>
+        <li>Tính cost mỗi ly, lưu phiên bản v1.1, v1.2… và so sánh</li>
+      </ul>
+      <a class="btn btn-accent" href="{{ url_for('smart_recipe', slug='tra-dao-o-long') }}">{{ icon('sliders', 18) }} Thử Smart Recipe</a>
+    </div>
+    <div class="panel" style="color: var(--ink)">
+      <h3>{{ icon('sliders') }} Trà đào ô long · 1 ly</h3>
+      <table class="table">
+        <thead><tr><th>Thành phần</th><th class="num">Gốc</th><th class="num">Sweetness +25%</th></tr></thead>
+        <tbody>
+          <tr><td>Trà ô long (đã ủ)</td><td class="num">150 ml</td><td class="num">150 ml</td></tr>
+          <tr class="changed"><td>Syrup đường</td><td class="num">20 ml</td><td class="num"><span class="delta-up">25 ml</span></td></tr>
+          <tr class="changed"><td>Nước lọc</td><td class="num">180 ml</td><td class="num"><span class="delta-down">175 ml</span></td></tr>
+          <tr><td>Tổng thể tích</td><td class="num">380 ml</td><td class="num">380 ml</td></tr>
+        </tbody>
+      </table>
+      <p class="tiny muted mt-1 mb-0">Tỷ lệ % là mức điều chỉnh nguyên liệu liên quan, không phải mức tăng tương ứng của cảm nhận vị giác.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container feature">
+    <div>{{ drink_art('#93C29E', '#E3EAD9', 'hot', 'Tea Garden') }}</div>
+    <div>
+      <p class="eyebrow">Tea Garden – From Leaf to Cup</p>
+      <h2>Trồng, hái, chế biến và mở tiệm trà nhỏ</h2>
+      <p class="muted">Game 2D nhẹ ngay trên web: chăm vườn trà, chọn đúng công đoạn chế biến cho từng loại trà, phối blend trong Blending Lab và phục vụ khách ở Tea House.</p>
+      <a class="btn btn-primary" href="{{ url_for('play') }}">{{ icon('leaf', 18) }} Play</a>
+    </div>
+  </div>
+</section>
+
+{% if creations %}
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Community creations</p><h2>Công thức do thành viên tạo</h2></div>
+      <a class="btn btn-ghost" href="{{ url_for('community') }}">Vào cộng đồng {{ icon('arrow', 18) }}</a></div>
+    <div class="grid grid-3">{% for c in creations %}{{ creation_card(c) }}{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Upcoming workshops</p><h2>Trải nghiệm trực tiếp</h2></div>
+      <a class="btn btn-ghost" href="{{ url_for('workshops') }}">Tất cả workshop {{ icon('arrow', 18) }}</a></div>
+    <div class="grid grid-3">
+      {% for w in workshops %}
+      <a class="card ws-card card-link" style="--c: {{ w.color }}" href="{{ url_for('workshop_detail', slug=w.slug) }}">
+        <span class="ws-band"></span>
+        <div class="ws-body">
+          <h3 class="mb-0">{{ w.name }}</h3>
+          <div class="ws-meta"><span>{{ icon('calendar', 16) }} {{ w.starts_at|date('%d/%m · %H:%M') }}</span><span>{{ icon('clock', 16) }} {{ w.duration }}</span></div>
+          <p class="small muted mb-0">{{ w.summary }}</p>
+          <span class="price">{{ w.price|vnd }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

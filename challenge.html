@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import creation_card, icon %}
+{% block title %}{{ ch.name }} – {{ site_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <nav class="breadcrumb"><a href="{{ url_for('community', tab='challenges') }}">Challenges</a> / {{ ch.name }}</nav>
+    <h1>{{ ch.name }}</h1>
+    <p>{{ ch.description }}</p>
+    <div class="pills"><span class="pill pill-terra">{{ icon('spark', 14) }} {{ ch.reward }}</span><span class="pill">Hạn: {{ ch.ends_at|date }}</span></div>
+    <div class="btn-row mt-2"><a class="btn btn-primary" href="{{ url_for('studio', challenge=ch.slug) }}">Tham gia thử thách</a></div>
+  </div>
+</section>
+<section class="container" style="padding-bottom: 64px">
+  <h2>Bài dự thi ({{ entries|length }})</h2>
+  {% if entries %}
+    <div class="grid grid-3">{% for c in entries %}{{ creation_card(c) }}{% endfor %}</div>
+  {% else %}
+    <div class="empty-state"><h3>Chưa có bài dự thi</h3><p class="muted">Hãy là người mở màn!</p></div>
+  {% endif %}
+</section>
+{% endblock %}

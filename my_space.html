@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, axis_bar, recipe_card, creation_card %}
+{% block title %}My Tea Space – {{ site_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <div class="space-head">
+      <div class="space-avatar">{{ current_user.name[:1]|upper }}</div>
+      <div>
+        <p class="eyebrow mb-0">My Tea Space</p>
+        <h1 class="mb-0">{{ current_user.name }}</h1>
+        <p class="mb-0 small">{{ current_user.bio or current_user.email }}{% if dna %} · <strong>{{ dna.profile.name }}</strong>{% endif %}</p>
+      </div>
+      <div class="btn-row" style="margin-left:auto">
+        <a class="btn btn-outline btn-small" href="{{ url_for('studio') }}">{{ icon('plus', 16) }} Công thức mới</a>
+        <a class="btn btn-ghost btn-small" href="{{ url_for('logout') }}">Đăng xuất</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container" style="padding-bottom: 64px">
+  <nav class="tabs" aria-label="My Tea Space">
+    {% for key, label in [('overview', 'Tổng quan'), ('recipes', 'My Recipes'), ('saved', 'Saved & Collections'), ('passport', 'Tea Passport'), ('settings', 'Preferences')] %}
+      <a href="{{ url_for('my_space', tab=key) }}" class="{{ 'active' if tab == key }}">{{ label }}</a>
+    {% endfor %}
+  </nav>
+
+  {% if tab == 'overview' %}
+    <div class="stat-row mb-2">
+      <div class="stat"><strong>{{ mine|length }}</strong><span>Công thức tự tạo</span></div>
+      <div class="stat"><strong>{{ collections.values()|map('length')|sum }}</strong><span>Công thức đã lưu</span></div>
+      <div class="stat"><strong>{{ badges|selectattr('done')|list|length }}/{{ badges|length }}</strong><span>Huy hiệu</span></div>
+      <div class="stat"><strong>{{ game.level if game else 1 }}</strong><span>Cấp Tea Garden</span></div>
+    </div>
+    <div class="grid grid-2">
+      <div class="panel">
+        <h3>{{ icon('dna') }} My Tea DNA</h3>
+        {% if dna %}
+          <p class="mb-1"><strong>{{ dna.profile.name }}</strong> · {{ dna.profile.tagline }} <span class="small muted">· cập nhật {{ dna.updated_at|date }}</span></p>
+          <div class="axes">{% for row in rows %}{{ axis_bar(row.label, row.low, row.high, row.score, row.lean) }}{% endfor %}</div>
+          <a class="btn btn-ghost btn-small mt-1" href="{{ url_for('tea_dna_result') }}">Xem chi tiết {{ icon('arrow', 16) }}</a>
+        {% else %}
+          <p class="muted">Bạn chưa làm bài test khẩu vị.</p>
+          <a class="btn btn-primary btn-small" href="{{ url_for('tea_dna_quiz') }}">Làm Tea DNA</a>
+        {% endif %}
+      </div>
+      <div class="panel">
+        <h3>{{ icon('calendar') }} Workshop đã đặt</h3>
+        {% for b in bookings %}
+          <p class="mb-1"><a href="{{ url_for('workshop_detail', slug=b.slug) }}"><strong>{{ b.workshop_name }}</strong></a><br>
+          <span class="small muted">#TW{{ '%04d'|format(b.id) }} · {{ b.starts_at|date('%d/%m/%Y %H:%M') }} · {{ b.seats }} chỗ · {{ 'Chờ xác nhận' if b.status == 'pending' else b.status }}</span></p>
+        {% else %}
+          <p class="muted">Chưa có. <a href="{{ url_for('workshops') }}">Xem workshop sắp diễn ra</a>.</p>
+        {% endfor %}
+      </div>
+    </div>
+    {% if recs %}
+      <h2 class="mt-3">Gợi ý cho bạn</h2>
+      <p class="small muted">Kết hợp Tea DNA với những công thức bạn thực sự lưu – nên gợi ý thay đổi theo hành vi của bạn.</p>
+      <div class="grid grid-3">{% for r in recs %}{{ recipe_card(r) }}{% endfor %}</div>
+    {% endif %}
+
+  {% elif tab == 'recipes' %}
+    {% if mine %}
+      <div class="grid grid-3">{% for c in mine %}{{ creation_card(c) }}{% endfor %}</div>
+    {% else %}
+      <div class="empty-state"><h3>Chưa có công thức tự tạo</h3><p class="muted">Tùy chỉnh một công thức trong Smart Recipe hoặc viết mới trong Recipe Studio.</p>
+        <a class="btn btn-primary" href="{{ url_for('create_home') }}">Bắt đầu sáng tạo</a></div>
+    {% endif %}
+
+  {% elif tab == 'saved' %}
+    {% for name, items in collections.items() %}
+      <h2 class="mt-2">{{ name }} <span class="muted small">· {{ items|length }}</span></h2>
+      <div class="grid grid-3">{% for r in items %}{{ recipe_card(r) }}{% endfor %}</div>
+    {% else %}
+      <div class="empty-state"><h3>Chưa lưu công thức nào</h3><p class="muted">Bấm Save trên trang công thức và đặt tên bộ sưu tập, vd “My Summer Drinks”.</p>
+        <a class="btn btn-primary" href="{{ url_for('explore') }}">Khám phá Tea Library</a></div>
+    {% endfor %}
+
+  {% elif tab == 'passport' %}
+    <h2>Tea Passport</h2>
+    <p class="muted">Thành tích, thử thách và trải nghiệm của bạn trên toàn hệ sinh thái.</p>
+    <div class="badge-grid">
+      {% for b in badges %}
+        <div class="badge {{ 'done' if b.done }}">
+          <span class="b-icon">{{ icon(b.icon, 20) }}</span>
+          <div><strong>{{ b.name }}</strong><span>{{ b.desc }}{% if b.progress and not b.done %} · {{ b.progress }}{% endif %}</span></div>
+        </div>
+      {% endfor %}
+    </div>
+    <h3 class="mt-3">Challenge stamps</h3>
+    {% if stamps %}<div class="pills">{% for s in stamps %}<span class="pill pill-terra">{{ icon('spark', 14) }} {{ s }}</span>{% endfor %}</div>
+    {% else %}<p class="muted">Chưa tham gia thử thách nào. <a href="{{ url_for('community', tab='challenges') }}">Xem thử thách</a>.</p>{% endif %}
+
+  {% elif tab == 'settings' %}
+    <div class="grid grid-2">
+      <form class="panel" method="post" action="{{ url_for('update_preferences') }}">
+        <h3>Hồ sơ & sở thích</h3>
+        <div class="field"><label for="name">Tên hiển thị</label><input type="text" id="name" name="name" value="{{ current_user.name }}" maxlength="60"></div>
+        <div class="field"><label for="bio">Giới thiệu ngắn</label><input type="text" id="bio" name="bio" value="{{ current_user.bio or '' }}" maxlength="200"></div>
+        <p class="label">Muốn tránh</p>
+        {% for k, label in [('milk', 'Sữa bò'), ('caffeine', 'Caffeine'), ('honey', 'Mật ong'), ('sour', 'Vị quá chua')] %}
+          <label class="check"><input type="checkbox" name="avoid" value="{{ k }}" {{ 'checked' if k in prefs.get('avoid', []) }}> {{ label }}</label>
+        {% endfor %}
+        <div class="field mt-1"><label for="avoid_ingredients">Nguyên liệu không sử dụng</label>
+          <input type="text" id="avoid_ingredients" name="avoid_ingredients" value="{{ prefs.get('avoid_ingredients', [])|join(', ') }}" placeholder="vd: xoài, bạc hà">
+          <span class="hint">Cách nhau bằng dấu phẩy. Gợi ý sẽ bỏ qua công thức có các nguyên liệu này.</span></div>
+        <div class="field"><label for="allergies">Dị ứng (ghi chú riêng)</label>
+          <input type="text" id="allergies" name="allergies" value="{{ prefs.get('allergies', '') }}" maxlength="200"></div>
+        <div class="field"><label for="units">Đơn vị đo</label>
+          <select id="units" name="units"><option value="metric">ml / g</option></select></div>
+        <button class="btn btn-primary">Lưu</button>
+      </form>
+      <div class="panel">
+        <h3>Quyền riêng tư & dữ liệu</h3>
+        <p class="small">Bạn có quyền xem, chỉnh sửa và xóa các sở thích đã lưu. Tea DNA và sở thích chỉ dùng để gợi ý công thức trên nền tảng.</p>
+        <p class="small"><strong>Email:</strong> {{ current_user.email }}<br><strong>Tham gia:</strong> {{ current_user.created_at|date }}</p>
+        <form method="post" action="{{ url_for('clear_preference_data') }}" data-confirm="Xóa toàn bộ sở thích và Tea DNA? Thao tác không thể hoàn tác.">
+          <button class="btn btn-danger btn-small">Xóa dữ liệu sở thích & Tea DNA</button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

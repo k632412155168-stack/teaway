@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import creation_card, icon %}
+{% block title %}Community – {{ site_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <p class="eyebrow">Tea Community</p>
+    <h1>Sáng tạo, chia sẻ, thử thách</h1>
+    <p>Công thức do thành viên tạo. Thử, lưu, hoặc “Create my version” để tạo biến thể – tác giả gốc luôn được ghi nhận.</p>
+    <div class="btn-row"><a class="btn btn-primary" href="{{ url_for('studio') }}">{{ icon('plus', 18) }} Đăng công thức</a></div>
+  </div>
+</section>
+
+<section class="container" style="padding-bottom: 64px">
+  <nav class="tabs" aria-label="Bộ lọc cộng đồng">
+    {% for key, label in [('for-you', 'For You'), ('trending', 'Trending'), ('new', 'New Creations'), ('challenges', 'Challenges'), ('following', 'Following')] %}
+      <a href="{{ url_for('community', tab=key) }}" class="{{ 'active' if tab == key }}">{{ label }}</a>
+    {% endfor %}
+  </nav>
+
+  {% if tab == 'challenges' %}
+    <div class="grid grid-3">
+      {% for ch in challenges %}
+        <div class="card challenge-card">
+          <p class="eyebrow mb-0">Đến {{ ch.ends_at|date }}</p>
+          <h3 class="mb-0">{{ ch.name }}</h3>
+          <p class="small muted mb-0">{{ ch.description }}</p>
+          <span class="reward">{{ icon('spark', 16) }} {{ ch.reward }}</span>
+          <span class="small">{{ ch.entries }} bài dự thi</span>
+          <div class="btn-row mt-1">
+            <a class="btn btn-primary btn-small" href="{{ url_for('studio', challenge=ch.slug) }}">Tham gia</a>
+            <a class="btn btn-ghost btn-small" href="{{ url_for('challenge_detail', slug=ch.slug) }}">Xem bài dự thi</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="callout mt-2 small"><strong>Cách tham gia:</strong> xem đề bài → tạo công thức trong Recipe Studio → chọn thử thách và đăng công khai → cộng đồng tương tác và đánh giá → hệ thống trao huy hiệu. Tiêu chí chấm, thời gian và quyền sử dụng hình ảnh được công bố trong từng thử thách.</div>
+  {% elif tab == 'following' and not current_user %}
+    <div class="empty-state"><h3>Theo dõi người sáng tạo bạn thích</h3><p class="muted"><a href="{{ url_for('login', next=request.full_path) }}">Đăng nhập</a> để xem công thức từ những người bạn theo dõi.</p></div>
+  {% elif creations %}
+    <div class="grid grid-3">{% for c in creations %}{{ creation_card(c) }}{% endfor %}</div>
+  {% else %}
+    <div class="empty-state"><h3>Chưa có công thức ở đây</h3><p class="muted">{{ 'Hãy theo dõi một vài người sáng tạo trong cộng đồng.' if tab == 'following' else 'Hãy là người đầu tiên chia sẻ!' }}</p></div>
+  {% endif %}
+</section>
+{% endblock %}

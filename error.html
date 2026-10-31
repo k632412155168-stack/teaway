@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} – {{ site_name }}{% endblock %}
+{% block content %}
+<div class="container error-page">
+  <div class="code">{{ code }}</div>
+  <h1 style="font-size: 2rem">{{ message }}</h1>
+  <div class="btn-row" style="justify-content: center">
+    <a class="btn btn-primary" href="{{ url_for('home') }}">Về trang chủ</a>
+    <a class="btn btn-outline" href="{{ url_for('explore') }}">Khám phá công thức</a>
+  </div>
+</div>
+{% endblock %}

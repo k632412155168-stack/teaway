@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Tea DNA – {{ site_name }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container container-narrow">
+    <p class="eyebrow">Tea DNA · Taste Personality Profile</p>
+    <h1>Khám phá khẩu vị trà của bạn</h1>
+    <p>12 câu hỏi, khoảng 3 phút. Kết quả là hồ sơ vị giác trên 5 trục: Sweetness, Acidity, Bitterness, Tea Strength và Aroma.</p>
+    <div class="callout small">Tea DNA là công cụ phân loại sở thích tiêu dùng, <strong>không phải</strong> bài kiểm tra tâm lý hay đánh giá tính cách. Bạn có thể làm lại hoặc chỉnh hồ sơ bất cứ lúc nào.</div>
+  </div>
+</section>
+
+<section class="container container-narrow" style="padding-bottom: 64px">
+  <div class="quiz-progress">
+    <div class="btn-row" style="justify-content: space-between; margin-bottom: 6px">
+      <span class="small"><strong id="answered">0</strong> / {{ questions|length }} câu</span>
+      <span class="small muted">Có thể bỏ qua câu bất kỳ</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+  </div>
+
+  <form method="post" id="dna-form">
+    {% for q in questions %}
+    <fieldset class="panel question" data-q="{{ q.id }}">
+      <legend><span class="qnum">Câu {{ loop.index }}</span>{{ q.text }}</legend>
+      {% if q.type == 'scale' %}
+        <div class="scale">
+          <span class="scale-pole">{{ q.low }}</span>
+          {% for n in range(1, 6) %}
+            <label><input type="radio" name="{{ q.id }}" value="{{ n }}" aria-label="{{ n }} trên 5"><span>{{ n }}</span></label>
+          {% endfor %}
+          <span class="scale-pole">{{ q.high }}</span>
+        </div>
+      {% elif q.type == 'avoid' %}
+        <div class="options cols-2">
+          {% for o in q.options %}<label class="option"><input type="checkbox" name="{{ q.id }}" value="{{ o.key }}"><span>{{ o.label }}</span></label>{% endfor %}
+        </div>
+      {% else %}
+        <div class="options {{ 'cols-2' if q.options|length > 3 }}">
+          {% for o in q.options %}<label class="option"><input type="radio" name="{{ q.id }}" value="{{ o.key }}"><span>{{ o.label }}</span></label>{% endfor %}
+        </div>
+      {% endif %}
+    </fieldset>
+    {% endfor %}
+    <div class="btn-row mt-2">
+      <button class="btn btn-primary" type="submit">{{ icon('dna', 18) }} Xem Tea DNA của tôi</button>
+      <span class="small muted">Trả lời càng đầy đủ, kết quả càng đáng tin cậy.</span>
+    </div>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const form = document.getElementById('dna-form');
+  const sets = Array.from(form.querySelectorAll('fieldset[data-q]'));
+  function update() {
+    const done = sets.filter((f) => f.querySelector('input:checked')).length;
+    document.getElementById('answered').textContent = done;
+    document.getElementById('progress').style.width = (done / sets.length * 100) + '%';
+  }
+  form.addEventListener('change', update);
+  update();
+})();
+</script>
+{% endblock %}

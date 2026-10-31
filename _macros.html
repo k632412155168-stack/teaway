@@ -1,0 +1,134 @@
+{# ===================== Minh họa đồ uống (SVG, không cần ảnh) ===================== #}
+{% macro drink_art(color, accent, temperature='iced', label='') -%}
+<svg class="drink-art" viewBox="0 0 240 180" role="img" aria-label="{{ label or 'Minh họa đồ uống' }}" preserveAspectRatio="xMidYMid slice">
+  <rect width="240" height="180" fill="{{ accent }}"/>
+  <circle cx="190" cy="34" r="56" fill="#ffffff" opacity=".35"/>
+  <circle cx="40" cy="160" r="46" fill="{{ color }}" opacity=".18"/>
+  <path d="M30 128 C 48 112, 64 112, 70 128" stroke="#71866A" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M46 116 c -10 -12 -4 -26 10 -28 c 2 14 -2 22 -10 28z" fill="#71866A" opacity=".85"/>
+  <path d="M60 122 c 4 -14 18 -18 28 -10 c -8 10 -18 12 -28 10z" fill="#8FA486" opacity=".85"/>
+  {% if temperature == 'hot' %}
+    <path d="M100 52 q -8 -12 0 -22 q 8 -10 0 -22" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".9"/>
+    <path d="M122 54 q -8 -12 0 -22 q 8 -10 0 -22" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>
+    <path d="M144 52 q -8 -12 0 -22 q 8 -10 0 -22" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".9"/>
+    <ellipse cx="122" cy="150" rx="70" ry="10" fill="#263D32" opacity=".12"/>
+    <path d="M78 64 h88 v52 a44 34 0 0 1 -88 0z" fill="#FFFDF8" stroke="#263D32" stroke-width="2.5"/>
+    <path d="M82 72 h80 v42 a40 28 0 0 1 -80 0z" fill="{{ color }}"/>
+    <path d="M166 76 a18 18 0 0 1 0 36" stroke="#263D32" stroke-width="5" fill="none"/>
+    <ellipse cx="122" cy="146" rx="62" ry="7" fill="#FFFDF8" stroke="#263D32" stroke-width="2.5"/>
+  {% else %}
+    <ellipse cx="122" cy="160" rx="46" ry="7" fill="#263D32" opacity=".12"/>
+    <path d="M86 40 h72 l-8 116 h-56z" fill="#ffffff" opacity=".55" stroke="#263D32" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M89.5 70 h65 l-6 84 h-53z" fill="{{ color }}"/>
+    {% if temperature == 'iced' %}
+    <rect x="98" y="76" width="18" height="18" rx="4" fill="#ffffff" opacity=".55" transform="rotate(-12 107 85)"/>
+    <rect x="122" y="84" width="18" height="18" rx="4" fill="#ffffff" opacity=".45" transform="rotate(10 131 93)"/>
+    <rect x="106" y="100" width="16" height="16" rx="4" fill="#ffffff" opacity=".4"/>
+    {% endif %}
+    <path d="M138 18 l -10 120" stroke="#263D32" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="150" cy="64" r="11" fill="{{ color }}" stroke="#263D32" stroke-width="2"/>
+  {% endif %}
+</svg>
+{%- endmacro %}
+
+{# ===================== Thẻ công thức ===================== #}
+{% macro recipe_card(r) -%}
+<article class="card recipe-card">
+  <a href="{{ url_for('recipe_detail', slug=r.slug) }}" class="card-link" aria-label="{{ r.name }}">
+    <div class="card-media">
+      {{ drink_art(r.color, r.accent, r.temperature, r.name) }}
+      {% if r.match %}<span class="match-badge">{{ r.match }}% hợp vị</span>{% endif %}
+      <span class="label-badge">Verified</span>
+    </div>
+    <div class="card-body">
+      <p class="eyebrow">{{ r.category }} · {{ r.temperature|temp }}</p>
+      <h3>{{ r.name }}</h3>
+      <p class="muted small">{{ r.name_en }}</p>
+      <div class="pills">
+        {% for t in r.flavor_tags[:3] %}<span class="pill">{{ t }}</span>{% endfor %}
+      </div>
+      <dl class="meta-row">
+        <div><dt>Thời gian</dt><dd>{{ r.prep_minutes }} phút</dd></div>
+        <div><dt>Độ khó</dt><dd>{{ r.difficulty|diff }}</dd></div>
+        <div><dt>Chi phí</dt><dd>{{ r.cost_per_serving|vnd }}</dd></div>
+      </dl>
+    </div>
+  </a>
+</article>
+{%- endmacro %}
+
+{# ===================== Thẻ công thức cộng đồng ===================== #}
+{% macro creation_card(c) -%}
+<article class="card recipe-card">
+  <a href="{{ url_for('creation_detail', cid=c.id) }}" class="card-link" aria-label="{{ c.title }}">
+    <div class="card-media">
+      {{ drink_art(c.color, c.accent, c.temperature or 'iced', c.title) }}
+      {% if c.match %}<span class="match-badge">{{ c.match }}% hợp vị</span>{% endif %}
+      <span class="label-badge community">{{ c.source_label or 'Community Recipe' }}</span>
+    </div>
+    <div class="card-body">
+      <p class="eyebrow">{{ c.author_name }} · {{ c.version_label }}</p>
+      <h3>{{ c.title }}</h3>
+      <p class="muted small clamp-2">{{ c.description }}</p>
+      <div class="pills">{% for t in c.flavor_tags[:3] %}<span class="pill">{{ t }}</span>{% endfor %}</div>
+      <dl class="meta-row">
+        <div><dt>Lượt thích</dt><dd>{{ c.like_count }}</dd></div>
+        <div><dt>Bình luận</dt><dd>{{ c.comment_count }}</dd></div>
+        <div><dt>Chi phí</dt><dd>{{ c.cost_per_serving|vnd }}</dd></div>
+      </dl>
+    </div>
+  </a>
+</article>
+{%- endmacro %}
+
+{# ===================== Thanh trục khẩu vị ===================== #}
+{% macro axis_bar(label, low, high, score, lean=None) -%}
+<div class="axis">
+  <div class="axis-head"><span class="axis-label">{{ label }}</span><span class="axis-score">{{ score }}/100</span></div>
+  <div class="axis-track" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ score }}" aria-label="{{ label }}">
+    <span class="axis-fill" style="width: {{ score }}%"></span>
+    <span class="axis-dot" style="left: {{ score }}%"></span>
+  </div>
+  <div class="axis-poles"><span>{{ low }}</span>{% if lean %}<span class="axis-lean">{{ lean }}</span>{% endif %}<span>{{ high }}</span></div>
+</div>
+{%- endmacro %}
+
+{% macro taste_profile(taste, axes) -%}
+<div class="axes">
+  {% for key, info in axes.items() %}
+    {{ axis_bar(info.label, info.low, info.high, taste.get(key, 50)) }}
+  {% endfor %}
+</div>
+{%- endmacro %}
+
+{# ===================== Icon (inline SVG) ===================== #}
+{% macro icon(name, size=20) -%}
+<svg class="icon" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if name == 'leaf' %}<path d="M5 19c0-8 5-14 15-15-1 10-7 15-15 15z"/><path d="M5 19l8-8"/>
+{% elif name == 'search' %}<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+{% elif name == 'clock' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+{% elif name == 'bookmark' %}<path d="M6 4h12v16l-6-4-6 4z"/>
+{% elif name == 'share' %}<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
+{% elif name == 'sliders' %}<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>
+{% elif name == 'spark' %}<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>
+{% elif name == 'dna' %}<path d="M7 3c0 6 10 6 10 12s-10 6-10 6M17 3c0 6-10 6-10 12"/><path d="M8 7h8M8 17h8"/>
+{% elif name == 'cup' %}<path d="M4 8h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 2 2 2 2 4M12 3c0 2 2 2 2 4"/>
+{% elif name == 'chat' %}<path d="M4 5h16v11H9l-5 4z"/>
+{% elif name == 'globe' %}<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>
+{% elif name == 'layers' %}<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>
+{% elif name == 'heart' %}<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>
+{% elif name == 'user' %}<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>
+{% elif name == 'menu' %}<path d="M4 7h16M4 12h16M4 17h16"/>
+{% elif name == 'arrow' %}<path d="M5 12h14M13 6l6 6-6 6"/>
+{% elif name == 'warn' %}<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h0"/>
+{% elif name == 'info' %}<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h0"/>
+{% elif name == 'reset' %}<path d="M4 4v6h6"/><path d="M4.5 15a8 8 0 1 0 1.9-8.3L4 10"/>
+{% elif name == 'compare' %}<path d="M8 3v18M16 3v18M3 8h5M16 16h5"/>
+{% elif name == 'plus' %}<path d="M12 5v14M5 12h14"/>
+{% elif name == 'x' %}<path d="M6 6l12 12M18 6L6 18"/>
+{% elif name == 'map' %}<path d="M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>
+{% elif name == 'calendar' %}<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>
+{% elif name == 'users' %}<circle cx="9" cy="8" r="3.5"/><path d="M2 20c.8-3.5 3.5-5 7-5s6.2 1.5 7 5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.4 2.2 4 5"/>
+{% else %}<circle cx="12" cy="12" r="9"/>{% endif %}
+</svg>
+{%- endmacro %}
